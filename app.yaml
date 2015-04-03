@@ -9,12 +9,24 @@ handlers:
   script: upload.php
 - url: /stylesheets
   static_dir : stylesheets
+- url: /pchart
+  static_dir : pChart2.1.4
 - url: /images
   static_dir : images
 - url: /javascripts
   static_dir : js
 - url: /_ah/login_required
   script: do_openid_login.app
+- url: /map.php
+  script: map.php
+- url: /muting.php
+  script: muting.php
+- url: /Calls.php
+  script: Calls.php
+- url: /detail.php
+  script: Detail.php
+- url: /fetchCallType.php
+  script: fetchCallType.php
 - url: /.*
   script: volteServer.php
   login: required

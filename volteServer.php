@@ -12,6 +12,91 @@
 	<link href="js/hideshow.js" type="text/javascript" rel="javascript"></link>
 	<link href="js/jquery.tablesorter.min.js" type="text/javascript" rel="javascript"></link>
 	<link href="text/javascript" src="js/jquery.equalHeight.js" rel="javascript"></link>
+
+<?php
+    $conn = mysql_connect(':/cloudsql/psychic-rush-755:database',
+    	'root','');
+    if(!$conn){
+    	die('Could no connect:'.mysql_error());
+    }
+    mysql_select_db('Echo');
+
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallType = 'VoLTE' " );
+    $rows = mysql_fetch_array($rs);
+    $volte_count = intval($rows[0]);
+
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallType = '3G' " );
+    $rows = mysql_fetch_array($rs);
+    $threeg_count = intval($rows[0]);
+
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallType = '2G' " );
+    $rows = mysql_fetch_array($rs);
+    $twog_count = intval($rows[0]);
+
+//////////////////////////////////
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallDropReason != 'NULL' AND CallType = 'VoLTE' " );
+    $rows = mysql_fetch_array($rs);
+    $volte_drop_count = intval($rows[0]);
+
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallSetupFailureReason != 'NULL' AND CallType = 'VoLTE' " );
+    $rows = mysql_fetch_array($rs);
+    $volte_setupfailure_count = intval($rows[0]);
+
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallSetupFailureReason = 'NULL' AND CallDropReason = 'NULL' AND CallType = 'VoLTE' " );
+    $rows = mysql_fetch_array($rs);
+    $volte_normal_count = intval($rows[0]);
+
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallDropReason != 'NULL' AND CallType = '3G' " );
+    $rows = mysql_fetch_array($rs);
+    $g3_drop_count = intval($rows[0]);
+
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallSetupFailureReason != 'NULL' AND CallType = '3G' " );
+    $rows = mysql_fetch_array($rs);
+    $g3_setupfailure_count = intval($rows[0]);
+
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallSetupFailureReason = 'NULL' AND CallDropReason = 'NULL' AND CallType = '3G' " );
+    $rows = mysql_fetch_array($rs);
+    $g3_normal_count = intval($rows[0]);
+
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallDropReason != 'NULL' AND CallType = '2G' " );
+    $rows = mysql_fetch_array($rs);
+    $g2_drop_count = intval($rows[0]);
+
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallSetupFailureReason != 'NULL' AND CallType = '2G' " );
+    $rows = mysql_fetch_array($rs);
+    $g2_setupfailure_count = intval($rows[0]);
+
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallSetupFailureReason = 'NULL' AND CallDropReason = 'NULL' AND CallType = '2G' " );
+    $rows = mysql_fetch_array($rs);
+    $g2_normal_count = intval($rows[0]);
+    ////////////////////////////////////
+	$rs = mysql_query("SELECT * FROM CallAggregatedData WHERE MutingStartTime != 'NULL' AND CallType = 'VoLTE' " );
+	$mute_short_cnt = 0;
+	$mute_long_cnt = 0;
+    if($myrow = mysql_fetch_array($rs)){
+    	$i=0;
+    	do{
+    		$i++;
+    		$Time = $myrow["MutingStartTime"];
+    		$endTime = $myrow["MutingEndTime"];
+    		$Duration = strtotime($endTime) - strtotime($Time);
+    		if($Duration>10){
+    			$mute_long_cnt = $mute_long_cnt+1;
+    		}
+    		else{
+    			$mute_short_cnt = $mute_short_cnt+1;
+    		}
+    	}
+    while ($myrow = mysql_fetch_array($rs));
+}
+
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE MutingStartTime = 'NULL' AND CallType = 'VoLTE' " );
+    $rows = mysql_fetch_array($rs);
+    $nomute_count = intval($rows[0]);
+?>
+
+
+
 	<script type="text/javascript">
 	$(document).ready(function() 
     	{ 
@@ -43,13 +128,143 @@
     $(function(){
         $('.column').equalHeight();
     });
+
 </script>
+
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load('visualization', '1.0', {'packages':['corechart']});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+
+      	var volte =  eval("<?php echo $volte_count; ?>");
+      	var twog =  eval("<?php echo $twog_count; ?>");
+      	var threeg = eval("<?php echo $threeg_count; ?>");
+        // Create the data table.
+        
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Type');
+        data.addColumn('number', 'Number');
+        data.addRows([
+          ['VoLTE', volte],
+          ['3G Call', threeg],
+          ['2G Call', twog]
+        ]);
+        // Set chart options
+        var options = {'title':'Call Type Statistics',
+                       'width':400,
+                       'height':300};
+                               // Instantiate and draw our chart, passing in some options.
+        var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+      }
+    </script>
+
+  <script type="text/javascript">
+google.load('visualization', '1.1', {
+    'packages': ['bar']
+});
+google.setOnLoadCallback(drawStuff);
+
+function drawStuff() {
+
+	var volte_drop_count = eval("<?php echo $volte_drop_count;?>");
+	var volte_setupfailure_count = eval("<?php echo $volte_setupfailure_count;?>");
+	var volte_normal_count = eval("<?php echo $volte_normal_count;?>");
+
+	var g3_drop_count = eval("<?php echo $g3_drop_count;?>");
+	var g3_setupfailure_count = eval("<?php echo $g3_setupfailure_count;?>");
+	var g3_normal_count = eval("<?php echo $g3_normal_count;?>");
+
+	var g2_drop_count = eval("<?php echo $g2_drop_count;?>");
+	var g2_setupfailure_count = eval("<?php echo $g2_setupfailure_count;?>");
+	var g2_normal_count = eval("<?php echo $g2_normal_count;?>");
+
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Type');
+    data.addColumn('number', 'Normal');
+    data.addColumn('number', 'Setup Failure');
+    data.addColumn('number', 'Dropped');
+    data.addRows([
+        ['VoLTE',volte_normal_count , volte_setupfailure_count, volte_drop_count],
+        ['WFC', 0, 0, 0],
+        ['3G', g3_normal_count, g3_setupfailure_count, g3_drop_count],
+        ['2G', g2_normal_count, g2_setupfailure_count, g2_drop_count],
+        ['Out-Range', 0, 0, 0]
+    ]);
+    // Set chart options
+    var options = {
+        isStacked: true,
+        width: 400,
+        height: 300,
+        title: 'Call Drop Analysis'
+    };
+    //window.alert(volte_drop_count);
+    // Instantiate and draw our chart, passing in some options.
+    var chart = new google.charts.Bar(document.getElementById('barchart_values'));
+
+	function selectHandler() {
+    	var selectedItem = chart.getSelection()[0];
+    	if (selectedItem) {
+    		var row = selectedItem.row;
+    		var column = selectedItem.column;
+           	//alert('The user selected ' + selectedItem.row +" "+selectedItem.column);
+           	if(column>1){
+      			window.location.href = "Calls.php?row="+row+"&column="+column;
+      		}
+    	}
+  	}
+  google.visualization.events.addListener(chart, 'select', selectHandler);
+
+
+    chart.draw(data, google.charts.Bar.convertOptions(options));
+};
+  </script>
+
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load('visualization', '1.0', {'packages':['corechart']});
+      google.setOnLoadCallback(drawChart);
+      function drawChart() {
+
+      	var mute_short_cnt =  eval("<?php echo $mute_short_cnt; ?>");
+      	var mute_long_cnt =  eval("<?php echo $mute_long_cnt; ?>");
+      	var nomute_count = eval("<?php echo $nomute_count; ?>");
+        // Create the data table.
+        
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Type');
+        data.addColumn('number', 'Number');
+        data.addRows([
+          ['10+ seconds', mute_long_cnt],
+          ['5~10 seconds', mute_short_cnt],
+          ['Normal', nomute_count]
+        ]);
+        // Set chart options
+        var options = {'title':'# of calls with missing audio problem.',
+                       'width':400,
+                       'height':300};
+                               // Instantiate and draw our chart, passing in some options.
+        var chart = new google.visualization.PieChart(document.getElementById('pie1_div'));
+		function selectHandler() {
+	    	var selectedItem = chart.getSelection()[0];
+	    	if (selectedItem) {
+	    		var row = selectedItem.row;
+	            if(row < 2){
+	            	window.location.href = "Calls.php?rowMute="+row;	            }
+	    	}
+	  	}
+	  	google.visualization.events.addListener(chart, 'select', selectHandler);        
+        chart.draw(data, options);
+      }
+    </script>
+
+
   </head>
 
 <?php
 use google\appengine\api\users\User;
 use google\appengine\api\users\UserService;
-
 $user = UserService::getCurrentUser();
 ?>
 
@@ -57,131 +272,162 @@ $user = UserService::getCurrentUser();
  	<header id="header">
 		<hgroup>
 			<h1 class="site_title"><a href="index.html">Welcome! <?=$user->getNickname()?></a></h1>
-			<h2 class="section_title"><a href="index.html">Audio Issue Report Dashboard</a></h2>
+			<h2 class="section_title"><a href="index.html">Audio Quality Monitor Dashboard</a></h2>
 		</hgroup>
 	</header> <!-- end of header bar -->
 	
 	
 	<aside id="sidebar" class="column">
-		<form action="/search" method = "get" class="quick_search">
+		<form action="/Calls.php" method = "get" class="quick_search">
 			<input name = "keyword" type="text" value="Quick Search" onfocus="if(!this._haschanged){this.value=''};this._haschanged=true;">
 		</form>
 		<hr/>
 		<h3>Content</h3>
 		<ul class="toggle">
-			<li class="icn_new_article"><a href="#">New Article</a></li>
-			<li class="icn_edit_article"><a href="#">Edit Articles</a></li>
-		</ul>
-		<h3>Users</h3>
-		<ul class="toggle">
-			<li class="icn_add_user"><a href="#">Add New User</a></li>
-			<li class="icn_view_users"><a href="#">View Users</a></li>
-			<li class="icn_profile"><a href="#">Your Profile</a></li>
-		</ul>
-		<h3>Admin</h3>
-		<ul class="toggle">
-			<li class="icn_settings"><a href="#">Options</a></li>
-			<li class="icn_security"><a href="#">Security</a></li>
-			<li class="icn_jump_back"><a href="#">Logout</a></li>
-		</ul>
-		
+		<li class="icn_edit_article"><a href="#">Statistics</a></li>
+		<li class="icn_new_article"><a href="map.php">Call on the Map</a></li>		
+		</ul>		
 		<footer>
 			<hr />
-			<p><strong>Copyright &copy; 2014 Jack</strong></p>
+			<p><strong>Copyright &copy; 2015 T-Mobile and UMich</strong></p>
 		</footer>
 	</aside><!-- end of sidebar -->
 	
 	<section id="main" class="column">
-		
-		<h4 class="alert_info">Many functionalities are under development. Use the Quick Search Box to filter by MSISDN</h4>
+	<article class="module width_full">
+	<header><h3 class="tabs_involved">Call Statistics</h3>
+	</header>
+		<div id ="whole" style="position: relative; overflow: hidden;">
+		<div id = "chart_div" style="position: relative; width:50%; float:left;" ></div>
+		<div id="barchart_values" style="position: relative; width:50%; float:left;"></div>
+		</div>
+		</article>
 
-		<!--<article class="module width_full">
-			<header><h3>Stats</h3></header>
-			<div class="module_content">
-				<article class="stats_graph">
-					<img src="http://chart.apis.google.com/chart?chxr=0,0,3000&chxt=y&chs=520x140&cht=lc&chco=76A4FB,80C65A&chd=s:Tdjpsvyvttmiihgmnrst,OTbdcfhhggcTUTTUadfk&chls=2|2&chma=40,20,20,30" width="520" height="140" alt="" />
-				</article>
-				
-				<article class="stats_overview">
-					<div class="overview_today">
-						<p class="overview_day">Today</p>
-						<p class="overview_count">1,876</p>
-						<p class="overview_type">Hits</p>
-						<p class="overview_count">2,103</p>
-						<p class="overview_type">Views</p>
-					</div>
-					<div class="overview_previous">
-						<p class="overview_day">Yesterday</p>
-						<p class="overview_count">1,646</p>
-						<p class="overview_type">Hits</p>
-						<p class="overview_count">2,054</p>
-						<p class="overview_type">Views</p>
-					</div>
-				</article>
-				<div class="clear"></div>
-			</div>
-		</article><!-- end of stats article -->
-		
 		<article class="module width_full">
-		<?php
-		$conn = mysql_connect(':/cloudsql/psychic-rush-755:database',
-    	'root','');
-    if(!$conn){
-    	die('Could no connect:'.mysql_error());
-    }
-    mysql_select_db('Echo');
-    $rs = mysql_query("SELECT * FROM JSON");
+	<header><h3 class="tabs_involved">Missing Audio Problem</h3>
+	</header>
+		<div id ="whole" style="position: relative; overflow: hidden;">
+		<div id = "pie1_div" style="position: relative; width:50%; float:left;" ></div>
+		<div id="pie2_div" style="position: relative; width:50%; float:left;"></div>
+		</div>
+		</article>
+
+
+
+		<article class="module width_full">
+		<header><h3 class="tabs_involved">Recent Calls</h3>
+		</header>
+
+		<div class="tab_container">
+			<div id="tab1" class="tab_content">
+			<table class="tablesorter" cellspacing="0"> 
+			<thead> 
+				<tr> 
+    				<th>Time</th>
+    				<th>Direction</th>
+    				<th>Type</th>
+    				<th>Duration</th>
+    				<th>Problem</th> 
+    				<th>Number</th>
+    				<th>Detail </th>
+				</tr> 
+			</thead> 
+			<tbody> 
+
+	<?php
+    $pagesize=5;
+    $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData");
     $rows = mysql_fetch_array($rs);
-    do{
-		echo json_encode($rows["content"], JSON_PRETTY_PRINT);
+    $row_count = $rows[0];
+    #count page number needed
+    $pages = intval($row_count/$pagesize)+1;
+    if($row_count%$pagesize){
+    	$row_count++;
+    }
+    if(isset($_GET['page'])){
+    	$page = intval($_GET['page']);
+    }
+    else{
+    	$page = 1;
+    }
+    $offset = $pagesize*($page-1);
+    $rs = mysql_query("SELECT * FROM CallAggregatedData ORDER BY ID desc limit $offset,$pagesize");
 
-	    }
-    while ($rows = mysql_fetch_array($rs))
-    		?>
 
 
+    if($myrow = mysql_fetch_array($rs)){
+    	$i=0;
+    	do{
+    		$i++;
+    		$CallID = $myrow["CallID"];
+    		$Time = $myrow["StartTime"];
+    		$Direction = $myrow["CallDirection"];
+    		$Type = $myrow["CallType"];
+
+    		$endTime = $myrow["EndTime"];
+    		$Duration = strtotime($endTime) - strtotime($Time);
+    		#echo "Duration",$Duration;
+    		$CallSetupFailureReason = $myrow["CallSetupFailureReason"];
+    		$CallDropReason = $myrow["CallDropReason"];
+    		$MutingStartTime = $myrow["MutingStartTime"];
+    		$Problem = "";
+    		if($CallSetupFailureReason == "NULL" && $CallDropReason =="NULL" && $MutingStartTime=="NULL"){
+    			$Problem = "NULL";
+    		}
+    		elseif ($CallDropReason!="NULL"){
+    			$Problem = "Unintended Call Drop";
+    		}
+    		elseif ($MutingStartTime!="NULL"){
+    			$Problem = "Audio Muting";
+    		}
+    		elseif ($CallSetupFailureReason!="NULL"){
+    			$Problem = "Call Setup Failure";
+    		}
+    		$Package_name = $myrow["ApplicationPackageName"];
+    		$MSISDN = $myrow["MSISDN"];
+
+    ?>
+
+				<tr> 
+    				<td><?=$Time?></td> 
+    				<td><?=$Direction?></td>
+    				<td><?=$Type?></td> 
+    				<td><?=$Duration?></td>
+    				<td><?=$Problem?></td>
+    				<td><?=$MSISDN?></td>
+    				<td><a href=detail.php?callID=<?php echo $CallID; ?>>Detail</a></td>
+				</tr>  
+	<?php
+		}
+		while($myrow = mysql_fetch_array($rs));
+	}
+	$first = 1;
+	$prev = $page-1;
+	$next = $page+1;
+	$last = $pages;
+	?>
+			</tbody> 
+			</table>
+			</div><!-- end of #tab1 -->
+			<div align ='center'>Total <?=$pages?> Pages (<?=$page?>/<?=$pages?>)</div>
+			<div align = 'center'>
+	<?php
+		if($page>1){
+	?>
+			<a href = "volteServer.php?page=<?=$first?>">First Page     </a><a href = "volteServer.php?page=<?=$prev?>">Prev    </a>
+	<?php
+		}
+		if($page<$pages){
+	?>
+			<a href = "volteServer.php?page=<?=$next?>">Next    </a><a href = "volteServer.php?page=<?=$last?>">Last Page    </a>
+	<?php
+		}
+	?>
+			</div>		
+		</div><!-- end of .tab_container -->
+		
 	</article><!-- end of content manager article -->
-		
-
-		
-		<div class="clear"></div>
-		
-		<article class="module width_full">
-			<header><h3>Post New Article</h3></header>
-				<div class="module_content">
-						<fieldset>
-							<label>Post Title</label>
-							<input type="text">
-						</fieldset>
-						<fieldset>
-							<label>Content</label>
-							<textarea rows="12"></textarea>
-						</fieldset>
-						<fieldset style="width:48%; float:left; margin-right: 3%;"> <!-- to make two field float next to one another, adjust values accordingly -->
-							<label>Category</label>
-							<select style="width:92%;">
-								<option>Articles</option>
-								<option>Tutorials</option>
-								<option>Freebies</option>
-							</select>
-						</fieldset>
-						<fieldset style="width:48%; float:left;"> <!-- to make two field float next to one another, adjust values accordingly -->
-							<label>Tags</label>
-							<input type="text" style="width:92%;">
-						</fieldset><div class="clear"></div>
-				</div>
-			<footer>
-				<div class="submit_link">
-					<select>
-						<option>Draft</option>
-						<option>Published</option>
-					</select>
-					<input type="submit" value="Publish" class="alt_btn">
-					<input type="submit" value="Reset">
-				</div>
-			</footer>
-		</article><!-- end of post new article -->
-		
+			
 		<!--
 
 		<h4 class="alert_warning">A Warning Alert</h4>
