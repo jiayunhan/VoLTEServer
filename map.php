@@ -1,7 +1,7 @@
 <html>
   <head>
 	<meta charset="utf-8"/>
-	<title>Audio Issue Report Dashboard</title>
+	<title>EchoLocate Dashboard Prototype</title>
 	
 	<link rel="stylesheet" href="stylesheets/layout.css" type="text/css" />
 	<!--[if lt IE 9]>
@@ -17,17 +17,23 @@
     $conn = mysql_connect(':/cloudsql/psychic-rush-755:database',
     	'root','');
     if(!$conn){
-    	die('Could no connect:'.mysql_error());
+    	die('Could not connect:'.mysql_error());
     }
     mysql_select_db('Echo');
     ////////////////////////////////////
 	$rs = mysql_query("SELECT * FROM CallAggregatedData ORDER BY ID desc limit 20 " );
+    $info = "Last 20 Calls";
+if(isset($_GET['keyword'])){
+    $msisdn = "+1".$_GET['keyword'];
+    $rs = mysql_query("SELECT * FROM CallAggregatedData WHERE MSISDN = $msisdn ORDER BY ID desc limit 10 " );
+    $info = "Recent 10 calls for " .    $_GET['keyword'];
+}
+    $callID_array= array();
     $startX_array= array();
     $startY_array= array();
     $endX_array= array();
     $endY_array= array();
     $event_array =array();
-    $callID = 0;
     if($myrow = mysql_fetch_array($rs)){
     	$i=0;
     	do{
@@ -36,13 +42,13 @@
     		array_push($startY_array,$myrow["CallStartLocationY"]);
             array_push($endX_array,$myrow["CallEndLocationX"]);
             array_push($endY_array,$myrow["CallEndLocationY"]);
+            array_push($callID_array, $myrow["CallID"]);
             if($myrow["CallDropReason"]=="NULL" and $myrow["MutingStartTime"]=="NULL"){
                 array_push($event_array,0);
             }
             else{
                 array_push($event_array, 1);
-            }
-            $callID = intval($myrow["CallID"]);
+            };
     	}
     while ($myrow = mysql_fetch_array($rs));
 }
@@ -98,7 +104,7 @@
         var endX = <?php echo json_encode($endX_array)?>;
         var endY = <?php echo json_encode($endY_array)?>;
         var events = <?php echo json_encode($event_array)?>;
-
+        var callID =  <?php echo json_encode($callID_array)?>;
         var bounds = new google.maps.LatLngBounds();
 
         var mapOptions = {
@@ -128,13 +134,19 @@
 
         var x = parseFloat(endX[i]);
         var y = parseFloat(endY[i]);
-
+        var id = callID[i].toString();
             marker = new google.maps.Marker({
                 map: map,
                 position : { lat: x, lng: y},
                 animation : google.maps.Animation.DROP,
-                icon : pinImage
+                icon : pinImage,
+                url :"detail.php?callID="+id
             });
+
+              google.maps.event.addListener(marker, 'click', function() {
+                window.location.href = marker.url;
+              });
+
 
             var loc = new google.maps.LatLng(marker.position.lat(), marker.position.lng());
             bounds.extend(loc);           
@@ -178,17 +190,16 @@ $user = UserService::getCurrentUser();
  	<header id="header">
 		<hgroup>
 			<h1 class="site_title"><a href="index.html">Welcome! <?=$user->getNickname()?></a></h1>
-			<h2 class="section_title"><a href="index.html">Audio Quality Monitor Dashboard</a></h2>
+			<h2 class="section_title"><a href="index.html">EchoLocate Dashboard Prototype</a></h2>
 		</hgroup>
 	</header> <!-- end of header bar -->
 	
 	
 	<aside id="sidebar" class="column">
-		<form action="/Calls.php" method = "get" class="quick_search">
-			<input name = "keyword" type="text" value="Quick Search" onfocus="if(!this._haschanged){this.value=''};this._haschanged=true;">
+		<form action="/map.php" method = "get" class="quick_search">
+			<input name = "keyword" type="text" value="Phone Number Lookup(10-digit only)" onfocus="if(!this._haschanged){this.value=''};this._haschanged=true;">
 		</form>
 		<hr/>
-		<h3>Content</h3>
 		<ul class="toggle">
 		<li class="icn_edit_article"><a href="volteServer.php">Statistics</a></li>
 		<li class="icn_new_article"><a href="map.php">Call on the Map</a></li>
@@ -203,7 +214,7 @@ $user = UserService::getCurrentUser();
 	<section id="main" class="column">
 		
 		<article class="module width_full">
-	<header><h3 class="tabs_involved">Call on the Map: Last 20 Calls</h3>
+	<header><h3 class="tabs_involved">Call on the Map: <?php echo $info;?></h3>
 	</header>
             <div id="map-canvas"></div>
 		</article>

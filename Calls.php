@@ -1,7 +1,7 @@
 <html>
   <head>
 	<meta charset="utf-8"/>
-	<title>Audio Issue Report Dashboard</title>
+	<title>EchoLocate Dashboard Prototype</title>
 	
 	<link rel="stylesheet" href="stylesheets/layout.css" type="text/css" />
 	<!--[if lt IE 9]>
@@ -17,7 +17,7 @@
     $conn = mysql_connect(':/cloudsql/psychic-rush-755:database',
     	'root','');
     if(!$conn){
-    	die('Could no connect:'.mysql_error());
+    	die('Could not connect:'.mysql_error());
     }
     mysql_select_db('Echo');
 ?>
@@ -33,17 +33,16 @@ $user = UserService::getCurrentUser();
  	<header id="header">
 		<hgroup>
 			<h1 class="site_title"><a href="index.html">Welcome! <?=$user->getNickname()?></a></h1>
-			<h2 class="section_title"><a href="index.html">Audio Quality Monitor Dashboard</a></h2>
+			<h2 class="section_title"><a href="index.html">EchoLocate Dashboard Prototype</a></h2>
 		</hgroup>
 	</header> <!-- end of header bar -->
 	
 	
 	<aside id="sidebar" class="column">
 		<form action="/Calls.php" method = "get" class="quick_search">
-			<input name = "keyword" type="text" value="Quick Search" onfocus="if(!this._haschanged){this.value=''};this._haschanged=true;">
+			<input name = "keyword" type="text" value="Phone Number Lookup(10-digit only)" onfocus="if(!this._haschanged){this.value=''};this._haschanged=true;">
 		</form>
 		<hr/>
-		<h3>Content</h3>
 		<ul class="toggle">
 		<li class="icn_edit_article"><a href="volteServer.php">Statistics</a></li>
 		<li class="icn_new_article"><a href="map.php">Call on the Map</a></li>
@@ -116,8 +115,10 @@ $user = UserService::getCurrentUser();
     $page = 1;
     $pages = 1;
     if($problem == "SetupFailure"){
-        $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallType = '$type' AND CallSetupFailureReason != 'NULL' ");
-        $rows = mysql_fetch_array($rs);
+        if(isset($_GET['number'])){
+            $msisdn = "+1".$_GET['number'];
+        $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallType = '$type' AND CallSetupFailureReason != 'NULL' AND MSISDN = $msisdn ");
+                $rows = mysql_fetch_array($rs);
         $row_count = $rows[0];
         $pages = intval($row_count/$pagesize);
         if($row_count%$pagesize){
@@ -130,11 +131,35 @@ $user = UserService::getCurrentUser();
             $page = 1;
         }
         $offset = $pagesize*($page-1);
+
+        $rs1 = mysql_query("SELECT * FROM CallAggregatedData WHERE CallType = '$type' AND CallSetupFailureReason != 'NULL' AND MSISDN = $msisdn ORDER BY ID desc limit $offset,$pagesize");       
+        }
+        else{
+        $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallType = '$type' AND CallSetupFailureReason != 'NULL' ");
+                $rows = mysql_fetch_array($rs);
+        $row_count = $rows[0];
+        $pages = intval($row_count/$pagesize);
+        if($row_count%$pagesize){
+            $row_count++;
+        }
+        if(isset($_GET['page'])){
+            $page = intval($_GET['page']);
+        }
+        else{
+            $page = 1;
+        }
+        $offset = $pagesize*($page-1);
+
         $rs1 = mysql_query("SELECT * FROM CallAggregatedData WHERE CallType = '$type' AND CallSetupFailureReason != 'NULL' ORDER BY ID desc limit $offset,$pagesize");
-    }
+
+        }
+        }
+
     else{
-        $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallType = '$type' AND CallSetupFailureReason != 'NULL' ");
-        $rows = mysql_fetch_array($rs);
+        if(isset($_GET['number'])){
+            $msisdn = "+1".$_GET['number'];
+        $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallType = '$type' AND CallDropReason != 'NULL' AND MSISDN = $msisdn ");
+                $rows = mysql_fetch_array($rs);
         $row_count = $rows[0];
         $pages = intval($row_count/$pagesize);
         if($row_count%$pagesize){
@@ -147,12 +172,35 @@ $user = UserService::getCurrentUser();
             $page = 1;
         }
         $offset = $pagesize*($page-1);
+
+        $rs1 = mysql_query("SELECT * FROM CallAggregatedData WHERE CallType = '$type' AND CallDropReason != 'NULL' AND MSISDN = $msisdn ORDER BY ID desc limit $offset,$pagesize");
+        }
+
+        else{
+        $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE CallType = '$type' AND CallDropReason != 'NULL' ");
+                $rows = mysql_fetch_array($rs);
+        $row_count = $rows[0];
+        $pages = intval($row_count/$pagesize);
+        if($row_count%$pagesize){
+            $row_count++;
+        }
+        if(isset($_GET['page'])){
+            $page = intval($_GET['page']);
+        }
+        else{
+            $page = 1;
+        }
+        $offset = $pagesize*($page-1);
+
         $rs1 = mysql_query("SELECT * FROM CallAggregatedData WHERE CallType = '$type' AND CallDropReason != 'NULL' ORDER BY ID desc limit $offset,$pagesize");
+        }        
     }
     
     if (isset($_GET['rowMute'])){
-        $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE MutingStartTime != 'NULL' ");
-        $rows = mysql_fetch_array($rs);
+        if(isset($_GET['number'])){
+            $msisdn = "+1".$_GET['number'];
+        $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE MutingStartTime != 'NULL' AND MSISDN = $msisdn ");
+                $rows = mysql_fetch_array($rs);
         $row_count = $rows[0];
         $pages = intval($row_count/$pagesize);
         if($row_count%$pagesize){
@@ -165,7 +213,27 @@ $user = UserService::getCurrentUser();
             $page = 1;
         }
         $offset = $pagesize*($page-1);
-        $rs1 = mysql_query("SELECT * FROM CallAggregatedData WHERE MutingStartTime != 'NULL' ORDER BY ID desc limit $offset,$pagesize");       
+
+        $rs1 = mysql_query("SELECT * FROM CallAggregatedData WHERE MutingStartTime != 'NULL' AND MSISDN = $msisdn ORDER BY ID desc limit $offset,$pagesize");
+    }
+        else{
+        $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE MutingStartTime != 'NULL' ");
+                $rows = mysql_fetch_array($rs);
+        $row_count = $rows[0];
+        $pages = intval($row_count/$pagesize);
+        if($row_count%$pagesize){
+            $row_count++;
+        }
+        if(isset($_GET['page'])){
+            $page = intval($_GET['page']);
+        }
+        else{
+            $page = 1;
+        }
+        $offset = $pagesize*($page-1);
+
+        $rs1 = mysql_query("SELECT * FROM CallAggregatedData WHERE MutingStartTime != 'NULL' ORDER BY ID desc limit $offset,$pagesize");
+    }               
     }
 
     if(isset($_GET['keyword'])){

@@ -1,7 +1,7 @@
 <html>
   <head>
 	<meta charset="utf-8"/>
-	<title>Audio Issue Report Dashboard</title>
+	<title>EchoLocate Dashboard Prototype</title>
 	
 	<link rel="stylesheet" href="stylesheets/layout.css" type="text/css" />
 	<!--[if lt IE 9]>
@@ -144,17 +144,16 @@ $user = UserService::getCurrentUser();
  	<header id="header">
 		<hgroup>
 			<h1 class="site_title"><a href="index.html">Welcome! <?=$user->getNickname()?></a></h1>
-			<h2 class="section_title"><a href="index.html">Audio Quality Monitor Dashboard</a></h2>
+			<h2 class="section_title"><a href="index.html">EchoLocate Dashboard Prototype</a></h2>
 		</hgroup>
 	</header> <!-- end of header bar -->
 	
 	
 	<aside id="sidebar" class="column">
 		<form action="/Calls.php" method = "get" class="quick_search">
-			<input name = "keyword" type="text" value="Quick Search" onfocus="if(!this._haschanged){this.value=''};this._haschanged=true;">
+			<input name = "keyword" type="text" value="Phone Number Lookup(10-digit only)" onfocus="if(!this._haschanged){this.value=''};this._haschanged=true;">
 		</form>
 		<hr/>
-		<h3>Content</h3>
 		<ul class="toggle">
 		<li class="icn_edit_article"><a href="volteServer.php">Statistics</a></li>
 		<li class="icn_new_article"><a href="map.php">Call on the Map</a></li>
@@ -319,6 +318,24 @@ $user = UserService::getCurrentUser();
     							$signal = $signal." (3 bars)";
     						}
      						elseif ($signal>-110 and $signal<=-100) {
+    							$signal = $signal." (4 bars)";
+    						}
+    						else{
+    							$signal = $signal." (5 bars)";
+    						}  						
+    					}
+    					elseif($type = "3G"){
+    						$signal = -133+($signal*2);
+    						if($signal<=-113){
+    							$signal = $signal." (1 bar)";
+    						}
+    						elseif ($signal>-113 and $signal<=-103) {
+    							$signal = $signal." (2 bars)";
+    						}
+    						elseif ($signal>-103 and $signal<=-97) {
+    							$signal = $signal." (3 bars)";
+    						}
+     						elseif ($signal>-97 and $signal<=-89) {
     							$signal = $signal." (4 bars)";
     						}
     						else{

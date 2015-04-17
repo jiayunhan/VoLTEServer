@@ -18,11 +18,17 @@
       $CallDirection = $AggregatedDate_raw["CallDirection"];
       $CallType = $AggregatedDate_raw["CallType"];
 
-      if($CallType != "VoLTE"){
+      if($CallType != "VoLTE" or $CallId == 0){
         $CallId = rand(0,99999999);
       }
 
       $StartTime = $AggregatedDate_raw["StartTime"];
+
+      if($StartTime == ""){
+        exit(0);
+      }
+
+
       $EndTime = $AggregatedDate_raw["EndTime"];
       $CallSetupFailureReason = $AggregatedDate_raw["CallSetupFailureReason"];
       $CallDropReason = $AggregatedDate_raw["CallDropReason"];
