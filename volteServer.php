@@ -440,8 +440,8 @@ $user = UserService::getCurrentUser();
 
 	<?php
     $pagesize=5;
-    if(isset($_GET['number'])){
-        $msisdn = "+1".$_GET['number'];
+    if(isset($_GET['keyword'])){
+        $msisdn = "+1".$_GET['keyword'];
         $rs = mysql_query("SELECT COUNT(*) FROM CallAggregatedData WHERE MSISDN = $msisdn");
     }
     else{
